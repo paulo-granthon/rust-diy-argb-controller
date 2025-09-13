@@ -1,45 +1,13 @@
 use smart_leds::RGB8;
 
-
 pub fn repeating_rgbcym<const N: usize>() -> [RGB8; N] {
-    // Define the sequence of 6 colors: R, G, B, Y, C, M
     const COLORS: [RGB8; 6] = [
-        RGB8 {
-            // Red
-            r: 255,
-            g: 0,
-            b: 0,
-        },
-        RGB8 {
-            // Green
-            r: 0,
-            g: 255,
-            b: 0,
-        },
-        RGB8 {
-            // Blue
-            r: 0,
-            g: 0,
-            b: 255,
-        },
-        RGB8 {
-            // Yellow
-            r: 255,
-            g: 255,
-            b: 0,
-        },
-        RGB8 {
-            // Cyan
-            r: 0,
-            g: 255,
-            b: 255,
-        },
-        RGB8 {
-            // Magenta
-            r: 255,
-            g: 0,
-            b: 255,
-        },
+        RGB8::new(255, 0, 0),   // Red
+        RGB8::new(0, 255, 0),   // Green
+        RGB8::new(0, 0, 255),   // Blue
+        RGB8::new(255, 255, 0), // Yellow
+        RGB8::new(0, 255, 255), // Cyan
+        RGB8::new(255, 0, 255), // Magenta
     ];
 
     let v: &mut [RGB8; N] = &mut [RGB8 { r: 0, g: 0, b: 0 }; N];
@@ -50,4 +18,3 @@ pub fn repeating_rgbcym<const N: usize>() -> [RGB8; N] {
     }
     *v
 }
-
