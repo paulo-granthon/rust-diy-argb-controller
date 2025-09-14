@@ -41,6 +41,9 @@ fn main() -> ! {
         },
     );
 
+    const BRIGHTNESS_STEP: u8 = 32;
+
+    let mut brightness: u8 = 32;
     let mut offset: u8 = 0;
 
     let mut ws = Ws2812::new(spi);
@@ -57,10 +60,11 @@ fn main() -> ! {
     let mut current_ms: u32 = 0;
 
     loop {
-        if press_timer.update(button_a.is_low(), POLL_MS)
-            || strict_timer.update(button_b.is_low(), POLL_MS)
-        {
+        if press_timer.update(button_a.is_low(), POLL_MS) {
             offset = offset.wrapping_add(1);
+        }
+        if strict_timer.update(button_b.is_low(), POLL_MS) {
+            brightness = brightness.wrapping_sub(BRIGHTNESS_STEP);
         }
 
         let leds = repeating_rgbycm::<NUM_LEDS>(offset);
