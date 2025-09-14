@@ -39,11 +39,24 @@ fn main() -> ! {
         },
     );
 
+    let mut offset: u8 = 0;
+
     let mut ws = Ws2812::new(spi);
-    let leds = repeating_rgbcym::<NUM_LEDS>(0);
+
+    let button_a = pins.d2.into_pull_up_input();
+    let button_b = pins.d3.into_pull_up_input();
+
+    const BUTTON_INTERVAL_MS: u32 = 200;
 
     loop {
-        ws.write(smart_leds::brightness(leds.iter().cloned(), 64))
+        if button_a.is_low() || button_b.is_low() {
+            offset = offset.wrapping_add(1);
+            arduino_hal::delay_ms(BUTTON_INTERVAL_MS);
+        };
+
+        let leds = repeating_rgbcym::<NUM_LEDS>(offset);
+
+        ws.write(smart_leds::brightness(leds.iter().cloned(), brightness))
             .unwrap();
 
         arduino_hal::delay_ms(500);
