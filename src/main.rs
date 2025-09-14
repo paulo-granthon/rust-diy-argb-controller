@@ -2,8 +2,10 @@
 #![no_main]
 
 mod effects;
+mod timer;
 
 use crate::effects::repeating_rgbycm;
+use crate::timer::{PressTimer, StrictPressTimer};
 
 use panic_halt as _;
 use smart_leds::SmartLedsWrite;
@@ -46,19 +48,27 @@ fn main() -> ! {
     let button_a = pins.d2.into_pull_up_input();
     let button_b = pins.d3.into_pull_up_input();
 
-    const BUTTON_INTERVAL_MS: u32 = 200;
+    const BUTTON_HOLD_INTERVAL_MS: u32 = 200;
+
+    let mut press_timer = PressTimer::new(BUTTON_HOLD_INTERVAL_MS);
+    let mut strict_timer = StrictPressTimer::new(BUTTON_HOLD_INTERVAL_MS);
+
+    const POLL_MS: u32 = 50;
+    let mut current_ms: u32 = 0;
 
     loop {
-        if button_a.is_low() || button_b.is_low() {
+        if press_timer.update(button_a.is_low(), POLL_MS)
+            || strict_timer.update(button_b.is_low(), POLL_MS)
+        {
             offset = offset.wrapping_add(1);
-            arduino_hal::delay_ms(BUTTON_INTERVAL_MS);
-        };
+        }
 
         let leds = repeating_rgbycm::<NUM_LEDS>(offset);
 
         ws.write(smart_leds::brightness(leds.iter().cloned(), brightness))
             .unwrap();
 
-        arduino_hal::delay_ms(500);
+        arduino_hal::delay_ms(POLL_MS);
+        current_ms = current_ms.wrapping_add(POLL_MS);
     }
 }
