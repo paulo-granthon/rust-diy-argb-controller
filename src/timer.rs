@@ -1,3 +1,8 @@
+// TODO: allow different numeric sizes for timer
+pub trait CustomTimer {
+    fn update(&mut self, pressed: bool, elapsed_ms: u32) -> bool;
+}
+
 pub struct PressTimer {
     interval_ms: u32,
     acc_ms: u32,
@@ -12,8 +17,10 @@ impl PressTimer {
             was_pressed: false,
         }
     }
+}
 
-    pub fn update(&mut self, pressed: bool, elapsed_ms: u32) -> bool {
+impl CustomTimer for PressTimer {
+    fn update(&mut self, pressed: bool, elapsed_ms: u32) -> bool {
         if pressed {
             if !self.was_pressed {
                 // Edge: released -> pressed => immediate trigger
@@ -53,8 +60,10 @@ impl StrictPressTimer {
             was_pressed: false,
         }
     }
+}
 
-    pub fn update(&mut self, pressed: bool, elapsed_ms: u32) -> bool {
+impl CustomTimer for StrictPressTimer {
+    fn update(&mut self, pressed: bool, elapsed_ms: u32) -> bool {
         if pressed {
             if !self.was_pressed {
                 // Edge: immediate trigger

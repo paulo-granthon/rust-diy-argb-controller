@@ -5,7 +5,7 @@ mod effects;
 mod timer;
 
 use crate::effects::repeating_rgbycm;
-use crate::timer::{PressTimer, StrictPressTimer};
+use crate::timer::{CustomTimer, PressTimer, StrictPressTimer};
 
 use panic_halt as _;
 use smart_leds::SmartLedsWrite;
