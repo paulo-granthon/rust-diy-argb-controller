@@ -3,13 +3,14 @@
 
 mod button;
 mod effects;
+mod state;
 mod timer;
 
 use crate::button::Button;
 use crate::effects::repeating_rgbycm;
 use crate::timer::{PressTimer, StrictPressTimer};
 
-use core::{cell::Cell, fmt::Write as FmtWrite};
+use core::fmt::Write as FmtWrite;
 use heapless::String;
 use smart_leds::SmartLedsWrite;
 
@@ -20,6 +21,7 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 
+use state::STATE;
 use ws2812_spi::Ws2812;
 
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
@@ -71,22 +73,25 @@ fn main() -> ! {
     disp.flush().ok();
 
     const BRIGHTNESS_STEP: u8 = 32;
-    let brightness = Cell::new(32u8);
-    let offset = Cell::new(0u8);
 
     const POLL_MS: u32 = 20;
-
     const BUTTON_HOLD_INTERVAL_MS: u32 = 200;
 
     let mut button_a = Button::new(
         PressTimer::new(BUTTON_HOLD_INTERVAL_MS),
         pins.d4.into_pull_up_input(),
-        || offset.set(offset.get().wrapping_add(1) % 8),
+        || STATE.with(|s| s.phase_offset.set(s.phase_offset.get().wrapping_add(1) % 8)),
     );
+
     let mut button_b = Button::new(
         StrictPressTimer::new(BUTTON_HOLD_INTERVAL_MS),
         pins.d5.into_pull_up_input(),
-        || brightness.set(brightness.get().wrapping_sub(BRIGHTNESS_STEP)),
+        || {
+            STATE.with(|s| {
+                s.brightness
+                    .set(s.brightness.get().wrapping_sub(BRIGHTNESS_STEP))
+            })
+        },
     );
 
     // Text style
@@ -99,11 +104,14 @@ fn main() -> ! {
         button_a.update(POLL_MS);
         button_b.update(POLL_MS);
 
-        let leds = repeating_rgbycm::<NUM_LEDS>(offset.get());
+        let current_brightness = STATE.with(|s| s.brightness.get());
+        let current_phase_offset = STATE.with(|s| s.phase_offset.get());
+
+        let leds = repeating_rgbycm::<NUM_LEDS>(current_phase_offset);
 
         ws.write(smart_leds::brightness(
             leds.iter().cloned(),
-            brightness.get(),
+            current_brightness,
         ))
         .unwrap();
 
@@ -112,10 +120,10 @@ fn main() -> ! {
         let mut right: String<32> = String::new();
 
         // Format: "O: <cur> / <max>"
-        write!(left, "O: {} / {}", offset.get() + 1, 8u8).ok();
+        write!(left, "O: {} / {}", current_phase_offset + 1, 8u8).ok();
 
         // Format: "B: <cur> / <max>"
-        write!(right, "B: {} / {}", brightness.get(), u8::MAX).ok();
+        write!(right, "B: {} / {}", current_brightness, u8::MAX).ok();
 
         // Clear the display buffer
         disp.clear(BinaryColor::Off).ok();
