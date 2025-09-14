@@ -21,28 +21,29 @@ impl PressTimer {
 
 impl CustomTimer for PressTimer {
     fn update(&mut self, pressed: bool, elapsed_ms: u32) -> bool {
-        if pressed {
-            if !self.was_pressed {
-                // Edge: released -> pressed => immediate trigger
-                self.was_pressed = true;
-                self.acc_ms = 0;
-                return true;
-            } else {
-                // Still held: accumulate time and trigger every interval_ms
-                self.acc_ms = self.acc_ms.wrapping_add(elapsed_ms);
-                if self.acc_ms >= self.interval_ms {
-                    // keep remainder for phase correctness
-                    self.acc_ms = self.acc_ms.wrapping_sub(self.interval_ms);
-                    return true;
-                }
-                return false;
-            }
-        } else {
+        if !pressed {
             // Released: reset state so next press is immediate
             self.was_pressed = false;
             self.acc_ms = 0;
-            false
+            return false;
         }
+
+        if !self.was_pressed {
+            // Edge: released -> pressed => immediate trigger
+            self.was_pressed = true;
+            self.acc_ms = 0;
+            return true;
+        }
+
+        // Still held: accumulate time and trigger every interval_ms
+        self.acc_ms = self.acc_ms.wrapping_add(elapsed_ms);
+        if self.acc_ms >= self.interval_ms {
+            // keep remainder for phase correctness
+            self.acc_ms = self.acc_ms.wrapping_sub(self.interval_ms);
+            return true;
+        }
+
+        false
     }
 }
 
@@ -64,26 +65,27 @@ impl StrictPressTimer {
 
 impl CustomTimer for StrictPressTimer {
     fn update(&mut self, pressed: bool, elapsed_ms: u32) -> bool {
-        if pressed {
-            if !self.was_pressed {
-                // Edge: immediate trigger
-                self.was_pressed = true;
-                self.acc_ms = 0;
-                return true;
-            } else {
-                // Held: accumulate and fire each interval
-                self.acc_ms = self.acc_ms.wrapping_add(elapsed_ms);
-                if self.acc_ms >= self.interval_ms {
-                    self.acc_ms = self.acc_ms.wrapping_sub(self.interval_ms);
-                    return true;
-                }
-                return false;
-            }
-        } else {
+        if !pressed {
             // Released -> reset
             self.was_pressed = false;
             self.acc_ms = 0;
-            false
+            return false;
         }
+
+        if !self.was_pressed {
+            // Edge: immediate trigger
+            self.was_pressed = true;
+            self.acc_ms = 0;
+            return true;
+        }
+
+        // Held: accumulate and fire each interval
+        self.acc_ms = self.acc_ms.wrapping_add(elapsed_ms);
+        if self.acc_ms >= self.interval_ms {
+            self.acc_ms = self.acc_ms.wrapping_sub(self.interval_ms);
+            return true;
+        }
+
+        false
     }
 }
