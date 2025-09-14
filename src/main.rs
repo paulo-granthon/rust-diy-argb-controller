@@ -40,7 +40,7 @@ fn main() -> ! {
     );
 
     let mut ws = Ws2812::new(spi);
-    let leds = repeating_rgbcym::<NUM_LEDS>();
+    let leds = repeating_rgbcym::<NUM_LEDS>(0);
 
     loop {
         ws.write(smart_leds::brightness(leds.iter().cloned(), 64))
