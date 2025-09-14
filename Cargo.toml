@@ -17,6 +17,9 @@ nb = "1.1.0"
 embedded-hal = "1.0"
 ws2812-spi = "0.4.0"
 smart-leds = "0.3.0"
+ssd1306 = "0.10.0"
+embedded-graphics = "0.8.1"
+heapless = "0.9.1"
 
 [dependencies.arduino-hal]
 git = "https://github.com/rahix/avr-hal"
