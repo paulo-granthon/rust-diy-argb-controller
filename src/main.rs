@@ -40,8 +40,7 @@ fn main() -> ! {
     let brightness = Cell::new(32u8);
     let offset = Cell::new(0u8);
 
-    const POLL_MS: u32 = 50;
-    let mut current_ms: u32 = 0;
+    const POLL_MS: u32 = 20;
 
     const BUTTON_HOLD_INTERVAL_MS: u32 = 200;
 
@@ -57,8 +56,8 @@ fn main() -> ! {
     );
 
     loop {
-        button_a.update(current_ms);
-        button_b.update(current_ms);
+        button_a.update(POLL_MS);
+        button_b.update(POLL_MS);
 
         let leds = repeating_rgbycm::<NUM_LEDS>(offset.get());
 
@@ -69,6 +68,5 @@ fn main() -> ! {
         .unwrap();
 
         arduino_hal::delay_ms(POLL_MS);
-        current_ms = current_ms.wrapping_add(POLL_MS);
     }
 }
