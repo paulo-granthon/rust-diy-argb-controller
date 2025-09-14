@@ -1,12 +1,15 @@
 #![no_std]
 #![no_main]
 
+mod button;
 mod effects;
 mod timer;
 
+use crate::button::Button;
 use crate::effects::repeating_rgbycm;
-use crate::timer::{CustomTimer, PressTimer, StrictPressTimer};
+use crate::timer::{PressTimer, StrictPressTimer};
 
+use core::cell::Cell;
 use panic_halt as _;
 use smart_leds::SmartLedsWrite;
 use ws2812_spi::Ws2812;
@@ -41,36 +44,42 @@ fn main() -> ! {
         },
     );
 
-    const BRIGHTNESS_STEP: u8 = 32;
-
-    let mut brightness: u8 = 32;
-    let mut offset: u8 = 0;
-
     let mut ws = Ws2812::new(spi);
 
-    let button_a = pins.d2.into_pull_up_input();
-    let button_b = pins.d3.into_pull_up_input();
-
-    const BUTTON_HOLD_INTERVAL_MS: u32 = 200;
-
-    let mut press_timer = PressTimer::new(BUTTON_HOLD_INTERVAL_MS);
-    let mut strict_timer = StrictPressTimer::new(BUTTON_HOLD_INTERVAL_MS);
+    const BRIGHTNESS_STEP: u8 = 32;
+    let brightness = Cell::new(32u8);
+    let offset = Cell::new(0u8);
 
     const POLL_MS: u32 = 50;
     let mut current_ms: u32 = 0;
 
+    let d2 = pins.d2.into_pull_up_input();
+    let d3 = pins.d3.into_pull_up_input();
+
+    const BUTTON_HOLD_INTERVAL_MS: u32 = 200;
+
+    let mut button_a = Button::new(
+        PressTimer::new(BUTTON_HOLD_INTERVAL_MS),
+        || d2.is_low(),
+        || offset.set(offset.get().wrapping_add(1)),
+    );
+    let mut button_b = Button::new(
+        StrictPressTimer::new(BUTTON_HOLD_INTERVAL_MS),
+        || d3.is_low(),
+        || brightness.set(brightness.get().wrapping_sub(BRIGHTNESS_STEP)),
+    );
+
     loop {
-        if press_timer.update(button_a.is_low(), POLL_MS) {
-            offset = offset.wrapping_add(1);
-        }
-        if strict_timer.update(button_b.is_low(), POLL_MS) {
-            brightness = brightness.wrapping_sub(BRIGHTNESS_STEP);
-        }
+        button_a.update(current_ms);
+        button_b.update(current_ms);
 
-        let leds = repeating_rgbycm::<NUM_LEDS>(offset);
+        let leds = repeating_rgbycm::<NUM_LEDS>(offset.get());
 
-        ws.write(smart_leds::brightness(leds.iter().cloned(), brightness))
-            .unwrap();
+        ws.write(smart_leds::brightness(
+            leds.iter().cloned(),
+            brightness.get(),
+        ))
+        .unwrap();
 
         arduino_hal::delay_ms(POLL_MS);
         current_ms = current_ms.wrapping_add(POLL_MS);
