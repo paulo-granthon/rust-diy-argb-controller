@@ -1,6 +1,6 @@
 use smart_leds::RGB8;
 
-pub fn repeating_rgbcym<const N: usize>(offset: u8) -> [RGB8; N] {
+pub fn repeating_rgbycm<const N: usize>(offset: u8) -> [RGB8; N] {
     const COLORS: [RGB8; 6] = [
         RGB8::new(255, 0, 0),   // Red
         RGB8::new(0, 255, 0),   // Green

@@ -3,7 +3,7 @@
 
 mod effects;
 
-use crate::effects::repeating_rgbcym;
+use crate::effects::repeating_rgbycm;
 
 use panic_halt as _;
 use smart_leds::SmartLedsWrite;
@@ -54,7 +54,7 @@ fn main() -> ! {
             arduino_hal::delay_ms(BUTTON_INTERVAL_MS);
         };
 
-        let leds = repeating_rgbcym::<NUM_LEDS>(offset);
+        let leds = repeating_rgbycm::<NUM_LEDS>(offset);
 
         ws.write(smart_leds::brightness(leds.iter().cloned(), brightness))
             .unwrap();
