@@ -1,28 +1,28 @@
+use core::convert::Infallible;
+
+use embedded_hal::digital::InputPin;
+
 use crate::timer::CustomTimer;
 
 pub struct Button<T, P, A>
 where
     T: CustomTimer,
-    P: Fn() -> bool,
+    P: InputPin<Error = Infallible>,
     A: FnMut(),
 {
     timer: T,
-    press: P,
+    pin: P,
     action: A,
 }
 
 impl<T, P, A> Button<T, P, A>
 where
     T: CustomTimer,
-    P: Fn() -> bool,
+    P: InputPin<Error = Infallible>,
     A: FnMut(),
 {
-    pub const fn new(timer: T, press: P, action: A) -> Self {
-        Button {
-            timer,
-            press,
-            action,
-        }
+    pub const fn new(timer: T, pin: P, action: A) -> Self {
+        Button { timer, pin, action }
     }
 
     pub fn update(&mut self, elapsed_ms: u32) -> bool {
@@ -35,8 +35,8 @@ where
         }
     }
 
-    fn is_pressed(&self) -> bool {
-        (self.press)()
+    fn is_pressed(&mut self) -> bool {
+        self.pin.is_low().unwrap_or(false)
     }
 
     fn trigger(&mut self) {

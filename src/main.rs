@@ -53,19 +53,16 @@ fn main() -> ! {
     const POLL_MS: u32 = 50;
     let mut current_ms: u32 = 0;
 
-    let d2 = pins.d2.into_pull_up_input();
-    let d3 = pins.d3.into_pull_up_input();
-
     const BUTTON_HOLD_INTERVAL_MS: u32 = 200;
 
     let mut button_a = Button::new(
         PressTimer::new(BUTTON_HOLD_INTERVAL_MS),
-        || d2.is_low(),
+        pins.d2.into_pull_up_input(),
         || offset.set(offset.get().wrapping_add(1)),
     );
     let mut button_b = Button::new(
         StrictPressTimer::new(BUTTON_HOLD_INTERVAL_MS),
-        || d3.is_low(),
+        pins.d3.into_pull_up_input(),
         || brightness.set(brightness.get().wrapping_sub(BRIGHTNESS_STEP)),
     );
 
