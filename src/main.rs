@@ -4,6 +4,7 @@
 mod button;
 mod effects;
 mod state;
+mod r#static;
 mod timer;
 
 use crate::button::Button;
