@@ -3,6 +3,7 @@
 
 mod button;
 mod effects;
+mod menu;
 mod state;
 mod r#static;
 mod timer;
@@ -22,6 +23,7 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 
+use menu::MENU;
 use state::STATE;
 use ws2812_spi::Ws2812;
 
@@ -73,7 +75,7 @@ fn main() -> ! {
     disp.init().ok();
     disp.flush().ok();
 
-    const BRIGHTNESS_STEP: u8 = 32;
+    // const BRIGHTNESS_STEP: u8 = 32;
 
     const POLL_MS: u32 = 20;
     const BUTTON_HOLD_INTERVAL_MS: u32 = 200;
@@ -81,18 +83,13 @@ fn main() -> ! {
     let mut button_a = Button::new(
         PressTimer::new(BUTTON_HOLD_INTERVAL_MS),
         pins.d4.into_pull_up_input(),
-        || STATE.with(|s| s.phase_offset.set(s.phase_offset.get().wrapping_add(1) % 8)),
+        || MENU.with(|m| m.next()),
     );
 
     let mut button_b = Button::new(
         StrictPressTimer::new(BUTTON_HOLD_INTERVAL_MS),
         pins.d5.into_pull_up_input(),
-        || {
-            STATE.with(|s| {
-                s.brightness
-                    .set(s.brightness.get().wrapping_sub(BRIGHTNESS_STEP))
-            })
-        },
+        || (MENU.with(|m| m.current_item().action)()),
     );
 
     // Text style
@@ -119,12 +116,16 @@ fn main() -> ! {
         // Prepare tiny heapless Strings for formatting (no heap)
         let mut left: String<32> = String::new();
         let mut right: String<32> = String::new();
+        let mut bottom: String<32> = String::new();
 
         // Format: "O: <cur> / <max>"
         write!(left, "O: {} / {}", current_phase_offset + 1, 8u8).ok();
 
         // Format: "B: <cur> / <max>"
         write!(right, "B: {} / {}", current_brightness, u8::MAX).ok();
+
+        // Format: "<menu item name>"
+        MENU.with(|m| write!(bottom, "{}", m.current_item().name).ok());
 
         // Clear the display buffer
         disp.clear(BinaryColor::Off).ok();
@@ -136,6 +137,11 @@ fn main() -> ! {
 
         // Draw right column at x=64, y=0 (roughly the second column)
         Text::with_baseline(&right, Point::new(64, 0), text_style, Baseline::Top)
+            .draw(&mut disp)
+            .ok();
+
+        // Draw bottom row at x=0, y=22 (bottom of 32px display minus font height)
+        Text::with_baseline(&bottom, Point::new(0, 22), text_style, Baseline::Top)
             .draw(&mut disp)
             .ok();
 
