@@ -30,12 +30,16 @@ features = ["sparkfun-promicro"]
 # Configure the build for minimal size - AVRs have very little program memory
 [profile.dev]
 panic = "abort"
+opt-level = "z"
 lto = true
-opt-level = "s"
+codegen-units = 1
+overflow-checks = false
+debug = true
 
 [profile.release]
 panic = "abort"
-codegen-units = 1
-debug = true
+opt-level = "z"
 lto = true
-opt-level = "s"
+codegen-units = 1
+overflow-checks = false
+debug = 0
